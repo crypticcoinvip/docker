@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Masternode announcement helper script
-set -o errexit
+#set -o errexit
 set -o pipefail
 set -o nounset
 
