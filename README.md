@@ -73,7 +73,7 @@ Default parameters are:
 ```
 NPROC=4 
 CRYPTIC_URL=https://github.com/crypticcoinvip/CrypticCoin
-CRYPTIC_VERSION=1.2.0
+CRYPTIC_VERSION=2.0.0
 ```
 You can override them, running with --build-arg, for example (building old version with 8 threads):
 ```
