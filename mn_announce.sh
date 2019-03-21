@@ -10,17 +10,17 @@ set -o nounset
 # Masternode name, 3 to 31 letters:
 name="$USER@$HOSTNAME masternode"
 # P2PKH, must be unique:
-ownerAuthAddress=""
+ownerAuthAddress=${ownerAuthAddress:-""}
 # P2PKH, must be unique:
-operatorAuthAddress=""
+operatorAuthAddress=${operatorAuthAddress:-""}
 # P2PKH or P2SH
-ownerRewardAddress=""
+ownerRewardAddress=${ownerRewardAddress:-""}
 # P2PKH or P2SH
-operatorRewardAddress=""
+operatorRewardAddress=${operatorRewardAddress:-""}
 # P2PKH or P2SH
-collateralAddress=""
+collateralAddress=${collateralAddress:-""}
 # Number from 0 to 1. For example, 0.1 for 10%
-operatorRewardRatio="0"
+operatorRewardRatio=${operatorRewardRatio:-"0"}
 ###############################################################
 
 DOCKER_EXEC="docker exec -u crypticuser cryptic"
