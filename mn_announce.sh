@@ -8,7 +8,7 @@ set -o nounset
 # Set your addresses here, or leave them empty for autogeneration
 ###############################################################
 # Masternode name, 3 to 31 letters:
-name="$USER@$HOSTNAME masternode"
+name=${name:-"$USER@$HOSTNAME masternode"}
 # P2PKH, must be unique:
 ownerAuthAddress=${ownerAuthAddress:-""}
 # P2PKH, must be unique:
@@ -26,8 +26,16 @@ operatorRewardRatio=${operatorRewardRatio:-"0"}
 DOCKER_EXEC="docker exec -u crypticuser cryptic"
 CLI_COMMAND="$DOCKER_EXEC crypticcoin-cli"
 
-NODE_DIR=$HOME/.crypticcoin
-CONFIG_FILE=$NODE_DIR/crypticcoin.conf
+NODE_DIR=${NODE_DIR:-"$HOME/.crypticcoin"}
+CONFIG_FILE=${CONFIG_FILE:-"$NODE_DIR/crypticcoin.conf"}
+NETWORK_PATH=""
+if grep -q "^testnet=1" $CONFIG_FILE; then
+    NETWORK_PATH=testnet3/
+fi
+if grep -q "^regtest=1" $CONFIG_FILE; then
+    NETWORK_PATH=regtest/
+fi
+DEBUG_LOG=$NODE_DIR/${NETWORK_PATH}debug.log
 ERRFILE=/tmp/err.$$
 
 function run_docker {
@@ -83,10 +91,27 @@ function ensure_docker_stopped {
 # Ensure crypticcoind in a container run:
 function ensure_crypticcoind_run {
     # Ensure container run
-    if $DOCKER_EXEC ps ax >/dev/null; then
+
+    started=false
+    for run in {1..10}
+    do
+        if $DOCKER_EXEC ps ax >/dev/null 2>$ERRFILE; then
+            started=true
+            break
+        else
+            if cat $ERRFILE 2>/dev/null | grep -q -E "(Error response from daemon: Container .* is not running)|(Error: No such container:)" ; then
+                echo "Waiting for container start"
+                sleep 1
+                continue
+            fi
+        fi
+    done
+
+    if $started; then
         echo "Run cryptic container:  OK"
     else
         echo "Run docker image $IMAGE failed!"
+        cat $ERRFILE
         exit 1
     fi
 
@@ -105,6 +130,7 @@ function ensure_crypticcoind_run {
         echo "Waiting for crypticcoind"
         sleep 1
     done
+    echo "crypticcoind has started"
 }
 
 function wait_initialblockdownload {
@@ -113,7 +139,6 @@ function wait_initialblockdownload {
     loading=$($CLI_COMMAND isinitialblockdownload 2>$ERRFILE)
     while [ "${loading}" != "false" ]
     do
-    #        echo "loading = $loading"
         if [ "${loading}" == "true" ] ; then
             blocks=$($CLI_COMMAND getblockcount)
             echo "Waiting initial blocks download... (block: $blocks)"
@@ -128,21 +153,24 @@ function wait_initialblockdownload {
             sleep 1
         elif cat $ERRFILE 2>/dev/null | grep -q "Error: No such container:"; then
             # Everything was fine, but node has exit. Why? Reindex??
-            if tail -n 20 $NODE_DIR/debug.log | grep -q "Aborted block database rebuild"; then
+            if tail -n 20 $DEBUG_LOG | grep -q "Aborted block database rebuild"; then
                 echo "It looks like reindex needed. Try again please!"
             else
                 echo "Unknown error! Exit!"
             fi
             exit 1
         else
-            echo "$(tail -n 1 $ERRFILE)"
+            if ! cat $ERRFILE 2>/dev/null | grep -q "make sure server is running" ; then
+                echo "$(tail -n 1 $ERRFILE)"
+            fi
             if [ "$ERR_COUNT" -lt 10 ]; then
                 let ERR_COUNT++
                 sleep 1
-                continue
+            else
+                echo "Unknown error!"
+                cat $ERRFILE
+                exit 1
             fi
-            echo "Unknown error!"
-            exit 1
         fi
         loading=$($CLI_COMMAND isinitialblockdownload 2>$ERRFILE)
     done
@@ -193,7 +221,7 @@ else
         NEED_REINDEX=true
     fi
 
-    if tail -n 20 $NODE_DIR/debug.log | grep -q "Aborted block database rebuild"; then
+    if tail -n 20 $DEBUG_LOG | grep -q "Aborted block database rebuild"; then
         echo "Forcing reindex"
         NEED_REINDEX=true
     fi
@@ -207,7 +235,6 @@ else
     run_docker
 fi
 
-sleep 3
 ensure_crypticcoind_run
 wait_initialblockdownload
 
