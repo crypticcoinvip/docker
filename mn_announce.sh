@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Masternode announcement helper script
-#set -o errexit
+set -o errexit
 set -o pipefail
 set -o nounset
 
@@ -137,7 +137,7 @@ function wait_initialblockdownload {
             echo "Unknown error!"
             echo "$(tail -n 1 $ERRFILE)"
             sleep 1
-#            exit 1
+            exit 1
         fi
         loading=$($CLI_COMMAND isinitialblockdownload 2>$ERRFILE)
     done
@@ -171,7 +171,7 @@ else
     echo "Start with non-empty node"
     ensure_docker_stopped
 
-    if grep -q -E "(masternode_operator)|(masternode_owner)" $CONFIG_FILE; then
+    if grep -q -E "(^masternode_operator)|(^masternode_owner)" $CONFIG_FILE; then
         echo "It looks like you are a masternode already! Are you sure you want to create new one?"
         echo "Delete 'masternode_operator' and 'masternode_owner' from $CONFIG_FILE and try again!"
     fi
@@ -184,7 +184,7 @@ else
         fi
     else
         echo "Adding txindex=1"
-        printf "\ntxindex=1" >> $CONFIG_FILE
+        printf "\ntxindex=1\n" >> $CONFIG_FILE
         NEED_REINDEX=true
     fi
 
@@ -231,8 +231,8 @@ if id=$($CLI_COMMAND mn_announce [] "{\
 then
     echo "Restarting..."
     ensure_docker_stopped
-    echo "masternode_owner=$ownerAuthAddress" >> $CONFIG_FILE
-    echo "masternode_operator=$operatorAuthAddress" >> $CONFIG_FILE
+    printf "\nmasternode_owner=$ownerAuthAddress\n" >> $CONFIG_FILE
+    printf "masternode_operator=$operatorAuthAddress\n" >> $CONFIG_FILE
     run_docker
 
     echo "Congratulations! You have announced new masternode"

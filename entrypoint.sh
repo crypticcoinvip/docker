@@ -33,7 +33,7 @@ fi
 
 if [[ -z "$@" ]]; then
     gosu $GROUP_ID:$USER_ID fetch-params.sh
-    gosu $GROUP_ID:$USER_ID crypticcoind -printtoconsole
+    gosu $GROUP_ID:$USER_ID crypticcoind
 else
     echo "Running custom command $@"
     gosu $GROUP_ID:$USER_ID "$@"
