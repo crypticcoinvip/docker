@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Masternode announcement helper script
-set -o errexit
+#set -o errexit
 set -o pipefail
 set -o nounset
 
@@ -136,7 +136,7 @@ function wait_initialblockdownload {
         else
             echo "Unknown error!"
             echo "$(tail -n 1 $ERRFILE)"
-            sleep 1
+#            sleep 1
             exit 1
         fi
         loading=$($CLI_COMMAND isinitialblockdownload 2>$ERRFILE)
