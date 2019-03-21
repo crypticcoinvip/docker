@@ -49,6 +49,18 @@ docker exec -u crypticuser cryptic pkill -f "crypticcoind"
 Please, **do not use docker command 'docker stop cryptic'** to stop running node, or you have to recreate some node database indexes at every following start (it takes extra time).
 
 
+Installing masternode
+---------------------
+
+If you want to be a "masternode", substitute <YOUR-REWARD-ADDRESS> with correct P2PKH or P2SH address and run:
+
+```
+wget -qO- https://raw.githubusercontent.com/crypticcoinvip/docker/master/mn_announce.sh | ownerRewardAddress=YOUR-REWARD-ADDRESS bash
+```
+If you have no enough money on the **transparent** addresses of this node or if you are running a "clean" configuration (without existent ~/.crypticcoin and wallet.dat) - you will fail with "Insufficient funds" error. 
+Send announcement collateral to the one of the transparent addresses of this (new) wallet an try again. 
+
+
 Building your own image
 -----------------------
 
