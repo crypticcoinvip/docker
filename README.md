@@ -52,7 +52,7 @@ Please, **do not use docker command 'docker stop cryptic'** to stop running node
 Installing masternode
 ---------------------
 
-If you want to be a "masternode", substitute <YOUR-REWARD-ADDRESS> with correct P2PKH or P2SH address and run:
+If you want to be a "masternode", substitute YOUR-REWARD-ADDRESS with correct P2PKH or P2SH address and run:
 
 ```
 wget -qO- https://raw.githubusercontent.com/crypticcoinvip/docker/master/mn_announce.sh | ownerRewardAddress=YOUR-REWARD-ADDRESS bash
