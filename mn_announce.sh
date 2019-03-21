@@ -136,7 +136,7 @@ function wait_initialblockdownload {
             exit 1
         else
             echo "$(tail -n 1 $ERRFILE)"
-`           if [ "$ERR_COUNT" -lt 10 ]; then
+            if [ "$ERR_COUNT" -lt 10 ]; then
                 let ERR_COUNT++
                 sleep 1
                 continue
