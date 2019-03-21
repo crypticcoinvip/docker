@@ -17,6 +17,7 @@ RUN export DEBIAN_FRONTEND=noninteractive \
     && apt-get install -y apt-utils \
     && apt-get install -y bsdmainutils software-properties-common \
     && apt-get install -y wget curl tor libgomp1 gosu \
+    && mkdir -p /root/.ccache/ \
     && apt-get install -y ${BUILD_DEPS} \
     && rm -rf /var/lib/apt/lists/* \
     && git clone ${CRYPTIC_URL} crypticcoin && cd crypticcoin && git checkout ${CRYPTIC_VERSION} \
