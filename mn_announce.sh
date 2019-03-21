@@ -109,6 +109,7 @@ function ensure_crypticcoind_run {
 
 function wait_initialblockdownload {
     # Wait for initial blocks download:
+    ERR_COUNT=0
     loading=$($CLI_COMMAND isinitialblockdownload 2>$ERRFILE)
     while [ "${loading}" != "false" ]
     do
@@ -134,9 +135,13 @@ function wait_initialblockdownload {
             fi
             exit 1
         else
-            echo "Unknown error!"
             echo "$(tail -n 1 $ERRFILE)"
-#            sleep 1
+`           if [ "$ERR_COUNT" -lt 10 ]; then
+                let ERR_COUNT++
+                sleep 1
+                continue
+            fi
+            echo "Unknown error!"
             exit 1
         fi
         loading=$($CLI_COMMAND isinitialblockdownload 2>$ERRFILE)
@@ -247,7 +252,8 @@ else
         echo "You should have at least $($CLI_COMMAND mn_estimateannouncementfee) on transparent addresses to announce a masternode!"
         echo "Now you have only $($CLI_COMMAND getbalance)"
     else
-        echo "$(tail -n 1 $ERRFILE)"
+        echo "Error: $(tail -n 1 $ERRFILE)"
     fi
     ensure_docker_stopped
+    echo "Done"
 fi
