@@ -31,10 +31,18 @@ else
    echo "Node data is not empty, starting node as is..."
 fi
 
+GOSU="gosu $GROUP_ID:$USER_ID"
+
+# Check if it was started from 'root' - hack it!!
+if [[ "$GROUP_ID" == "0" && "$USER_ID" == "0" ]]; then
+    GOSU=""
+    HOME=$HOME_DIR
+fi
+
 if [[ -z "$@" ]]; then
-    gosu $GROUP_ID:$USER_ID fetch-params.sh
-    gosu $GROUP_ID:$USER_ID crypticcoind
+    $GOSU fetch-params.sh
+    $GOSU crypticcoind
 else
     echo "Running custom command $@"
-    gosu $GROUP_ID:$USER_ID "$@"
+    $GOSU "$@"
 fi
