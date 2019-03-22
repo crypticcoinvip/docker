@@ -1,2 +1,2 @@
 #!/bin/bash
-docker exec -u crypticuser cryptic pkill -f "crypticcoind"
+docker exec cryptic pkill -f "crypticcoind"
