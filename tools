@@ -38,15 +38,17 @@ ERRFILE=/tmp/err.$$
 MAXCONNECTIONS=64
 
 function help {
-    echo "d_exec"
-    echo "cli"
-    echo "run_d"
-    echo "run_i"
-    echo "stop_d"
-    echo "ensure_node_stopped"
-    echo "ensure_node_run"
-    echo "wait_init"
-    echo "mn_announce"
+    cat << EOF
+    run_d               Run docker container in 'detached' mode
+    run_i               Run docker container in 'interactive' mode
+    stop_d              Stop docker container (just by interrupting 'crypticcoind' process inside)
+    ensure_stopped      Ensures container has been stopped completely
+    wait_run            Waits until node run ('crypticcoind' process started). Container should be started by 'run_d' or 'run_i' before
+    wait_init           Waits until node init and ready for 'cli' commands
+    d_exec [args ...]   Execute command in container (for example, 'd_exec ps ax')
+    cli [args ...]      Execute 'cli' command
+    mn_announce         Try to announce masternode
+EOF
 }
 
 function d_exec {
@@ -83,7 +85,7 @@ function is_emptynode {
     fi
 }
 
-function ensure_node_stopped {
+function ensure_stopped {
     for run in {1..3}
     do
         PSAX=$(d_exec ps ax 2>$ERRFILE)
@@ -106,7 +108,7 @@ function ensure_node_stopped {
 }
 
 # Ensure crypticcoind in a container run:
-function ensure_node_run {
+function wait_run {
     started=false
     for run in {1..10}
     do
@@ -224,7 +226,7 @@ function mn_announce {
         echo "Start with empty node"
     else
         echo "Start with non-empty node"
-        ensure_node_stopped || exit 1
+        ensure_stopped || exit 1
 
         if grep -q -E "(^masternode_operator)|(^masternode_owner)" $CONFIG_FILE; then
             echo "It looks like you are a masternode already! Are you sure you want to create new one?"
@@ -265,7 +267,7 @@ function mn_announce {
         run_d
     fi
 
-    ensure_node_run && wait_init || exit 1
+    wait_run && wait_init || exit 1
 
     ##############################################################
     echo "Trying to announce masternode with this parameters:"
@@ -291,7 +293,7 @@ function mn_announce {
     }" 2>$ERRFILE)
     then
         echo "Restarting..."
-        ensure_node_stopped || exit 1
+        ensure_stopped || exit 1
         ensure_file_eol $CONFIG_FILE
         printf "masternode_owner=$ownerAuthAddress\n" >> $CONFIG_FILE
         printf "masternode_operator=$operatorAuthAddress\n" >> $CONFIG_FILE
@@ -311,7 +313,7 @@ function mn_announce {
         else
             echo "Error: $(tail -n 1 $ERRFILE)"
         fi
-        ensure_node_stopped || exit 1
+        ensure_stopped || exit 1
         echo "Done"
     fi
 }

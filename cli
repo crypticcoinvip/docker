@@ -1,2 +1,0 @@
-#!/bin/bash
-docker exec cryptic crypticcoin-cli -datadir=/home/crypticuser "$@"
