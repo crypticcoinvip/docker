@@ -1,0 +1,319 @@
+#!/usr/bin/env bash
+# Masternode announcement helper script
+#set -o errexit
+set -o pipefail
+set -o nounset
+
+# Fill free to modify this section. 
+# Set your addresses here, or leave them empty for autogeneration
+###############################################################
+# Masternode name, 3 to 31 letters:
+name=${name:-"$USER@$HOSTNAME masternode"}
+# P2PKH, must be unique:
+ownerAuthAddress=${ownerAuthAddress:-""}
+# P2PKH, must be unique:
+operatorAuthAddress=${operatorAuthAddress:-""}
+# P2PKH or P2SH
+ownerRewardAddress=${ownerRewardAddress:-""}
+# P2PKH or P2SH
+operatorRewardAddress=${operatorRewardAddress:-""}
+# P2PKH or P2SH
+collateralAddress=${collateralAddress:-""}
+# Number from 0 to 1. For example, 0.1 for 10%
+operatorRewardRatio=${operatorRewardRatio:-"0"}
+###############################################################
+
+IMAGE="${IMAGE:-sevenswen/crypticcoinubuntu18.04}"
+NODE_DIR=${NODE_DIR:-"$HOME/.crypticcoin"}
+CONFIG_FILE=${CONFIG_FILE:-"$NODE_DIR/crypticcoin.conf"}
+NETWORK_PATH=""
+if grep -q "^testnet=1" $CONFIG_FILE; then
+    NETWORK_PATH=testnet3/
+fi
+if grep -q "^regtest=1" $CONFIG_FILE; then
+    NETWORK_PATH=regtest/
+fi
+DEBUG_LOG=$NODE_DIR/${NETWORK_PATH}debug.log
+ERRFILE=/tmp/err.$$
+MAXCONNECTIONS=64
+
+function help {
+    echo "d_exec"
+    echo "cli"
+    echo "run_d"
+    echo "run_i"
+    echo "stop_d"
+    echo "ensure_node_stopped"
+    echo "ensure_node_run"
+    echo "wait_init"
+    echo "mn_announce"
+}
+
+function d_exec {
+    docker exec cryptic "$@"
+}
+
+function cli {
+    d_exec crypticcoin-cli -datadir=/home/crypticuser/.crypticcoin "$@"
+}
+
+function run_d {
+    docker run -d -e USER_ID=$(id -u $USER) -e GROUP_ID=$(id -g $USER) \
+        -v $HOME/.crypticcoin/:/home/crypticuser/.crypticcoin:rw \
+        -v $HOME/.crypticcoin-params/:/home/crypticuser/.crypticcoin-params:rw \
+        --rm -it --name cryptic $IMAGE "$@"
+}
+
+function run_i {
+    docker run -e USER_ID=$(id -u $USER) -e GROUP_ID=$(id -g $USER) \
+        -v $HOME/.crypticcoin/:/home/crypticuser/.crypticcoin:rw \
+        -v $HOME/.crypticcoin-params/:/home/crypticuser/.crypticcoin-params:rw \
+        --rm -it --name cryptic $IMAGE "$@"
+}
+
+function stop_d {
+    d_exec pkill -f "crypticcoind" 2>$ERRFILE
+}
+
+function is_emptynode {
+    if [ -z "$(ls -A $NODE_DIR)" ]; then
+        return 0
+    else
+        return 1
+    fi
+}
+
+function ensure_node_stopped {
+    for run in {1..3}
+    do
+        PSAX=$(d_exec ps ax 2>$ERRFILE)
+        if cat $ERRFILE 2>/dev/null | grep -q "Error: No such container:" ; then
+            return 0
+        fi
+        if echo "$PSAX" | grep -q crypticcoind; then
+            echo "Trying to stop 'crypticcoind'"
+            stop_d
+            sleep 5
+            continue
+        else
+            # other process is running, just stop whole container
+            echo "Trying to stop container"
+            docker stop cryptic >/dev/null
+        fi
+    done
+    echo "Can't stop cryptic container, unknown error"
+    return 1
+}
+
+# Ensure crypticcoind in a container run:
+function ensure_node_run {
+    started=false
+    for run in {1..10}
+    do
+        if d_exec ps ax >/dev/null 2>$ERRFILE; then
+            started=true
+            break
+        else
+            if cat $ERRFILE 2>/dev/null | grep -q -E "(Error response from daemon: Container .* is not running)|(Error: No such container:)" ; then
+                echo "Waiting for container start"
+                sleep 1
+                continue
+            fi
+        fi
+    done
+
+    if $started; then
+        echo "Check if cryptic container started:  OK"
+    else
+        echo "Run docker image $IMAGE failed!"
+        cat $ERRFILE
+        return 1
+    fi
+
+    while d_exec ps ax 2>$ERRFILE | grep -q fetch-params.sh
+    do
+        echo "Waiting for initial fetching sprout/sapling params. Keep calm."
+        sleep 1
+    done
+
+    while ! d_exec ps ax 2>$ERRFILE | grep -q crypticcoind
+    do
+        if cat $ERRFILE 2>/dev/null | grep -q "Error: No such container:"; then
+            echo "Waiting for crypticcoind: unknown error"
+            return 1
+        fi
+        echo "Waiting for 'crypticcoind' start"
+        sleep 1
+    done
+    echo "'crypticcoind' started"
+}
+
+function wait_init {
+    # Wait for initial blocks download:
+    ERR_COUNT=0
+    loading=$(cli isinitialblockdownload 2>$ERRFILE)
+    while [ "${loading}" != "false" ]
+    do
+        if [ "${loading}" == "true" ] ; then
+            blocks=$(cli getblockcount)
+            echo "Waiting initial blocks download... (block: $blocks)"
+            sleep 5
+        elif cat $ERRFILE 2>/dev/null | grep -q "Loading block index" || \
+             cat $ERRFILE 2>/dev/null | grep -q "Verifying blocks" || \
+             cat $ERRFILE 2>/dev/null | grep -q "Verifying blocks" || \
+             cat $ERRFILE 2>/dev/null | grep -q "Rewinding blocks if needed" || \
+             cat $ERRFILE 2>/dev/null | grep -q "Loading wallet"
+        then
+            echo "$(tail -n 1 $ERRFILE)"
+            sleep 1
+        elif cat $ERRFILE 2>/dev/null | grep -q "Error: No such container:"; then
+            # Everything was fine, but node has exit. Why? Reindex??
+            if tail -n 20 $DEBUG_LOG | grep -q "Aborted block database rebuild"; then
+                echo "It looks like reindex needed. Try again please!"
+            else
+                echo "Unknown error!"
+            fi
+            return 1
+        else
+            if ! cat $ERRFILE 2>/dev/null | grep -q "make sure server is running" ; then
+                echo "$(tail -n 1 $ERRFILE)"
+            fi
+            if [ "$ERR_COUNT" -lt 10 ]; then
+                echo "$(tail -n 1 $ERRFILE)"
+                let ERR_COUNT++
+                sleep 1
+            else
+                echo "Unknown error!"
+                cat $ERRFILE
+                return 1
+            fi
+        fi
+        loading=$(cli isinitialblockdownload 2>$ERRFILE)
+    done
+}
+
+function check_address {
+    if [ "${!1}" == "" ]
+    then
+        if result=$(cli getnewaddress)
+        then
+            eval $1=$result
+        fi
+    fi
+    echo "$1 = ${!1}"
+}
+
+function ensure_file_eol {
+    # place "\n" at EOF only if not exit (if empty file - stay empty)
+    # note, that it will be different for OS X
+    sed -i -e '$a\' "$1" 2>/dev/null
+}
+
+function mn_announce {
+    if docker --version >/dev/null ; then
+        echo "Checks 'docker' installed: OK"
+    else
+        echo "Please install docker and try again"
+        return 1
+    fi
+
+    # remember, 1 means 'false' in bash
+    NEED_REINDEX=false
+
+    if is_emptynode; then
+        echo "Start with empty node"
+    else
+        echo "Start with non-empty node"
+        ensure_node_stopped || exit 1
+
+        if grep -q -E "(^masternode_operator)|(^masternode_owner)" $CONFIG_FILE; then
+            echo "It looks like you are a masternode already! Are you sure you want to create new one?"
+            echo "Delete 'masternode_operator' and 'masternode_owner' from $CONFIG_FILE and try again!"
+        fi
+
+        if grep -q "^maxconnections" $CONFIG_FILE; then
+            sed -i -e "s/^maxconnections=.*$/maxconnections=$MAXCONNECTIONS/" $CONFIG_FILE
+        else
+            ensure_file_eol $CONFIG_FILE
+            printf "maxconnections=$MAXCONNECTIONS\n" >> $CONFIG_FILE
+        fi
+
+        if grep -q "^txindex" $CONFIG_FILE; then
+            if grep -q "^txindex=0" $CONFIG_FILE; then
+                echo "Changing txindex=0 to txindex=1"
+                sed -i -e 's/^txindex=.*$/txindex=1/' $CONFIG_FILE
+                NEED_REINDEX=true
+            fi
+        else
+            echo "Adding txindex=1"
+            ensure_file_eol $CONFIG_FILE
+            printf "txindex=1\n" >> $CONFIG_FILE
+            NEED_REINDEX=true
+        fi
+
+        if tail -n 20 $DEBUG_LOG | grep -q "Aborted block database rebuild"; then
+            echo "Forcing reindex"
+            NEED_REINDEX=true
+        fi
+    fi
+
+    # Starting docker container
+    if $NEED_REINDEX; then
+        run_i fetch-params.sh
+        run_d crypticcoind -reindex
+    else
+        run_d
+    fi
+
+    ensure_node_run && wait_init || exit 1
+
+    ##############################################################
+    echo "Trying to announce masternode with this parameters:"
+    echo
+    echo "name = ${name}"
+    check_address ownerAuthAddress
+    check_address operatorAuthAddress
+    check_address ownerRewardAddress
+    # We don't generate operatorRewardAddress!
+    echo "operatorRewardAddress = ${operatorRewardAddress}"
+    check_address collateralAddress
+    echo "operatorRewardRatio = ${operatorRewardRatio}"
+    echo
+
+    if id=$(cli mn_announce [] "{\
+    \"name\":\"${name}\",\
+    \"ownerAuthAddress\":\"${ownerAuthAddress}\",\
+    \"operatorAuthAddress\":\"${operatorAuthAddress}\",\
+    \"ownerRewardAddress\":\"${ownerRewardAddress}\",\
+    \"operatorRewardAddress\":\"${operatorRewardAddress}\",\
+    \"operatorRewardRatio\":\"${operatorRewardRatio}\",\
+    \"collateralAddress\":\"${collateralAddress}\"\
+    }" 2>$ERRFILE)
+    then
+        echo "Restarting..."
+        ensure_node_stopped || exit 1
+        ensure_file_eol $CONFIG_FILE
+        printf "masternode_owner=$ownerAuthAddress\n" >> $CONFIG_FILE
+        printf "masternode_operator=$operatorAuthAddress\n" >> $CONFIG_FILE
+        run_d
+
+        echo "Congratulations! You have announced new masternode"
+        echo "with ID = $id"
+        echo "You can get additional info after block will be mined using:"
+        echo "$(cli) mn_list [\\\"$id\\\"] true"
+        echo
+        echo "Don't forget to KEEP NODE RUNNING, or you will be resigned!!!"
+        echo
+    else
+        if grep "Insufficient funds!" $ERRFILE ; then
+            echo "You should have at least $(cli mn_estimateannouncementfee) on transparent addresses to announce a masternode!"
+            echo "Now you have only $(cli getbalance)"
+        else
+            echo "Error: $(tail -n 1 $ERRFILE)"
+        fi
+        ensure_node_stopped || exit 1
+        echo "Done"
+    fi
+}
+
+"$@"
