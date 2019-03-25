@@ -4,7 +4,7 @@
 set -o pipefail
 set -o nounset
 
-# Fill free to modify this section. 
+# Feel free to modify this section. 
 # Set your addresses here, or leave them empty for autogeneration
 ###############################################################
 # Masternode name, 3 to 31 letters:
@@ -117,7 +117,7 @@ function wait_run {
             break
         else
             if cat $ERRFILE 2>/dev/null | grep -q -E "(Error response from daemon: Container .* is not running)|(Error: No such container:)" ; then
-                echo "Waiting for container start"
+                echo "Waiting for container to start"
                 sleep 1
                 continue
             fi
@@ -169,9 +169,9 @@ function wait_init {
             echo "$(tail -n 1 $ERRFILE)"
             sleep 1
         elif cat $ERRFILE 2>/dev/null | grep -q "Error: No such container:"; then
-            # Everything was fine, but node has exit. Why? Reindex??
+            # Everything was fine, but node has exited. Why? Reindex??
             if tail -n 20 $DEBUG_LOG | grep -q "Aborted block database rebuild"; then
-                echo "It looks like reindex needed. Try again please!"
+                echo "It looks like reindex is needed. Try again please!"
             else
                 echo "Unknown error!"
             fi
@@ -308,11 +308,11 @@ function mn_announce {
         echo "You can get additional info after block will be mined using:"
         echo "$(cli) mn_list [\\\"$id\\\"] true"
         echo
-        echo "Don't forget to KEEP NODE RUNNING, or you will be resigned!!!"
+        echo "Don't forget to KEEP NODE RUNNING, or you'll get dismissed by the quorum!"
         echo
     else
         if grep "Insufficient funds!" $ERRFILE ; then
-            echo "You should have at least $(cli mn_estimateannouncementfee) on transparent addresses to announce a masternode!"
+            echo "You should have at least $(cli mn_estimateannouncementfee) for fee + 1000000 CRYP for collateral on transparent addresses to announce a masternode!"
             echo "Now you have only $(cli getbalance)"
         else
             echo "Error: $(tail -n 1 $ERRFILE)"

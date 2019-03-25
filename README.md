@@ -2,7 +2,7 @@ What is it?
 -----------
 
 This software are the scripts to build and run [Crypticcoin](https://crypticcoin.io/) node in the [docker container](https://www.docker.com/)
-You can build new image from scratch, or just run existing at [DockerHub](https://cloud.docker.com/u/sevenswen/repository/list).
+You can build new image from scratch, or just run the the pre-built image from [DockerHub](https://cloud.docker.com/u/sevenswen/repository/list).
 
 First, you should install docker software and download this scripts.
 Also, if you are not a real 'root' user, you SHOULD add your current linux user to the 'docker' group and relogin. 
@@ -42,11 +42,11 @@ docker pull sevenswen/crypticcoinubuntu18.04
 
 Running 'cli' commands
 ----------------------
-After the node is running (deployed), commands can be run on the node using 'docker exec' with 'crypticcoin-cli', but this command is a bit long/unhandy:
+After the node is running (deployed), CLI commands could be passed using 'docker exec' with 'crypticcoin-cli', but it's a bit long/unhandy:
 ```
 docker exec cryptic -datadir=/home/crypticuser/.crypticcoin getblockchaininfo
 ```
-There are short alias script named 'cli':
+There's a short alias script named 'cli':
 ```
 . tools cli getblockchaininfo
 ```
@@ -82,13 +82,14 @@ ownerRewardAddress=YOUR-REWARD-ADDRESS . tools mn_announce
 ```
 
 If you have no enough money on the **transparent** addresses of this node or if you are running a "clean" configuration (without existent ~/.crypticcoin and wallet.dat) - you will fail with "Insufficient funds" error. 
-Send announcement collateral to the one of the transparent addresses of this (new) wallet an try again. 
+In this case the script will prompt you how much money you should provide for announcement.
+Send announcement coins to the one of the transparent addresses of this (new) wallet an try again. 
 
 
 Building your own image
 -----------------------
 
-You can build your own image (it takes very long time) with (notify '.' at end of line):
+You can build your own image (it takes very long time) with (don't forget '.' at the end):
 ```
 docker build -t <imagename> .
 ```
