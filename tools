@@ -206,7 +206,7 @@ function check_address {
 }
 
 function ensure_file_eol {
-    # place "\n" at EOF only if not exit (if empty file - stay empty)
+    # place "\n" at EOF only if not exist (if empty file - stay empty)
     # note, that it will be different for OS X
     sed -i -e '$a\' "$1" 2>/dev/null
 }
@@ -226,7 +226,7 @@ function mn_announce {
         echo "Start with empty node"
     else
         echo "Start with non-empty node"
-        ensure_stopped || exit 1
+        ensure_stopped || return 1
 
         if grep -q -E "(^masternode_operator)|(^masternode_owner)" $CONFIG_FILE; then
             echo "It looks like you are a masternode already! Are you sure you want to create new one?"
@@ -267,7 +267,7 @@ function mn_announce {
         run_d
     fi
 
-    wait_run && wait_init || exit 1
+    wait_run && wait_init || return 1
 
     ##############################################################
     echo "Trying to announce masternode with this parameters:"
@@ -293,10 +293,14 @@ function mn_announce {
     }" 2>$ERRFILE)
     then
         echo "Restarting..."
-        ensure_stopped || exit 1
+        ensure_stopped || return 1
         ensure_file_eol $CONFIG_FILE
         printf "masternode_owner=$ownerAuthAddress\n" >> $CONFIG_FILE
         printf "masternode_operator=$operatorAuthAddress\n" >> $CONFIG_FILE
+        printf "# This is not nesessary, but handy for lookup:\n" >> $CONFIG_FILE
+        printf "#masternode_id=$id\n" >> $CONFIG_FILE
+        printf "#masternode_name=$name\n" >> $CONFIG_FILE
+
         run_d
 
         echo "Congratulations! You have announced new masternode"
@@ -313,7 +317,7 @@ function mn_announce {
         else
             echo "Error: $(tail -n 1 $ERRFILE)"
         fi
-        ensure_stopped || exit 1
+        ensure_stopped || return 1
         echo "Done"
     fi
 }
