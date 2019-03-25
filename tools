@@ -4,25 +4,6 @@
 set -o pipefail
 set -o nounset
 
-# Feel free to modify this section. 
-# Set your addresses here, or leave them empty for autogeneration
-###############################################################
-# Masternode name, 3 to 31 letters:
-name=${name:-"$USER@$HOSTNAME masternode"}
-# P2PKH, must be unique:
-ownerAuthAddress=${ownerAuthAddress:-""}
-# P2PKH, must be unique:
-operatorAuthAddress=${operatorAuthAddress:-""}
-# P2PKH or P2SH
-ownerRewardAddress=${ownerRewardAddress:-""}
-# P2PKH or P2SH
-operatorRewardAddress=${operatorRewardAddress:-""}
-# P2PKH or P2SH
-collateralAddress=${collateralAddress:-""}
-# Number from 0 to 1. For example, 0.1 for 10%
-operatorRewardRatio=${operatorRewardRatio:-"0"}
-###############################################################
-
 IMAGE="${IMAGE:-sevenswen/crypticcoinubuntu18.04}"
 NODE_DIR=${NODE_DIR:-"$HOME/.crypticcoin"}
 CONFIG_FILE=${CONFIG_FILE:-"$NODE_DIR/crypticcoin.conf"}
@@ -183,7 +164,7 @@ function wait_init {
             if [ "$ERR_COUNT" -lt 10 ]; then
                 echo "$(tail -n 1 $ERRFILE)"
                 let ERR_COUNT++
-                sleep 1
+                sleep 2
             else
                 echo "Unknown error!"
                 cat $ERRFILE
@@ -211,7 +192,374 @@ function ensure_file_eol {
     sed -i -e '$a\' "$1" 2>/dev/null
 }
 
+function get_random_name {
+    namestemp=$(mktemp)
+
+    cat << EOF >$namestemp
+Abin Sur
+Abra Kadabra
+Adam Strange
+Alfred Pennyworth
+Amanda Waller
+Amazo
+Ambush Bug
+Amethyst
+Andrew Bennett
+Animal Man
+Animal-Vegetable-Mineral Man
+Aquagirl
+Aquaman
+Ares
+Artemis
+Atrocitus
+The Atom
+Azrael
+Aqualad
+Apache Chief
+Arsenal
+Archer
+Bane
+Batgirl
+Batman
+Batwoman
+Bat-Mite
+Beast Boy
+Bizarro
+Big Barda
+Billy Numerous
+Black Adam
+Black Beetle
+Black Canary
+Black Hand
+Black Lightning
+Black Manta
+Black Mask
+Blok
+Blue Beetle
+Blue Devil
+Booster Gold
+Bouncing Boy
+Brain
+Brainiac
+Brother Blood
+Bumblebee
+B'wana Beast
+Black Flash
+Black Vulcan
+Baby face
+Batman of Zur-en Arrh
+Bleez
+Bookwarm
+Cain
+Calendar Man
+Captain Atom
+Captain Boomerang
+Captain Comet
+Captain Carrot
+Captain Cold
+Captain Marvel
+Carol Ferris
+Catwoman
+Chameleon Boy
+Channel
+Cheetah
+Chemo
+Circe
+Clayface
+Cosmic Boy
+Cosmic King
+Cyborg
+Cyborg Superman
+Copperhead
+Crazy Quilt
+Colonel Hardy
+Condiment King
+Catman
+Clocking
+Darkseid
+Dawnstar
+Deadshot
+Deathstroke
+Desperaux
+Dr.Death
+Dr.Fate
+Dr.Light
+Dr.Manhattan
+Dr.Psycho
+Dr.Sivana
+Dolphin
+Doomsday
+Dream Girl
+Duo Damsel
+Dex-starr
+Dr.Phosphorus
+Elasti-Girl
+Element Lad
+Elongated Man
+Etrigan
+Enchantress
+Eraser
+Egghead
+Flash
+Fire
+Firefly
+The Fly
+Firestorm
+Frankenstein
+False Face
+Fury 6
+Green Lantern
+Guy Gardner
+Green Arrow
+Gorilla Grodd
+Granny Goodness
+Giganta
+General Immortus
+General Zod
+Gizmo
+Great White Shark
+Gentleman Ghost
+Hercules
+Huntress
+Hawkgirl
+Hawkman
+Hawk and Dove
+Harley-Quinn
+Hush
+Heatwave
+Hellhound
+Hitman
+Haggor
+Humpty Dumpty
+Hugo Strange
+Ice
+Inertia
+Invisible Boy
+Jaguar
+Jimmy Olsen
+Jinx
+John Diggle
+Johnny Thunder
+John Stewart
+Joker
+Joker's Daughter
+Katana
+Kilowog
+Kid Flash
+Kid Devil
+Killer Croc
+Krypto
+Kryptonite Man
+Killer Frost
+Key
+Karate Kid
+Kite Man
+King Tut
+Killermoth
+Kabuki Twins
+Lady Blackhawk
+Larfleeze
+Lex Luthor
+Libra
+Light Lass
+Lightning
+Lightning Lad
+Lightning Lord
+Livewire
+Lobo
+Louie The Lilac
+Lagoon Boy
+Martian Manhunter
+Mr.Terrific
+Mon-El
+Metamorpho
+Metal Men
+Man-Bat
+Metallo
+Mr.Mxyzsptlk
+Mirror master
+Mad Hatter
+Mongul
+Mera
+Mr.Freeze
+Mr.Mind
+Miss Martian
+Madame Rouge
+Monseiur Mallah
+Music Meister
+Mas y Menos
+Mammoth
+Mother Mae Eye
+Mr.Camera
+Ministrel
+March Harriet
+Magpie
+Mime
+Maxie Zeus
+Nightwing
+Oracle
+Ocean Master
+Outsider
+Orion
+Omac Brother Eye
+Orca
+Power Girl
+Poison Ivy
+Penguin
+Parallax
+Plastique
+Parasite
+Plastic Man
+Princess Projecta
+Polka Dot Man
+Prometheus
+Question
+Queen Bee
+Ragdoll
+Ra's Al Ghul
+Ravager
+Raven
+Razorsharp
+Red Bee
+Red Hood
+Red Tornado
+Red X
+Riddler
+Rip Hunter
+Robin
+Rocket Red
+Robotman
+Reverse Flash
+Ratchet
+Ratcatcher
+Ragman
+Static Shock
+Sandman
+Superman
+Supergirl and Streaky
+Sinestro
+Star Girl
+Scarecrow
+Steel
+Spectre
+Shark King
+Starfire
+Superboy
+Spoiler
+Solomon Grundy
+Shazam
+Simon
+Shadow Thief
+Shade
+Swamp Thing
+Static Shock
+See-More
+Saturn Girl
+Saturn Queen
+Sun Boy
+Shadow Lass
+Saint Walker
+Shame
+Skallox
+Samurai
+Sweet tooth
+Siren
+Simon the pieman
+Starfire
+Thunder
+Tarzan
+Two-Face
+Trickster
+Trigon
+Tweedle Dee and Tweedle Dum
+Toyman
+Timber Wolf
+Turtle
+Tarantula
+Ultra-Humanite
+Ultra Boy
+Vandal Savage
+Ventriloquist and Scarface
+Vixen
+Vibe
+Veom
+Vice
+Weather Wizard
+Wildcat
+Wildebeest
+Wildfire
+Wonder Girl
+Wonder Woman
+White Canary
+The Wasp
+Zatanna
+Zatara
+Zoom
+Zarrell
+Zodiac master
+Zilius Zox
+Zebra Man
+Zod
+Anatole
+Bebeck
+Bolshoi
+Cassiopea
+Cossack
+Creote
+Fireball
+Firebird
+Fusion
+Hammer
+KGBeast
+Molotov
+Morozko
+Perun
+Pozhar
+Pravda
+Proletariat
+Red Star
+Red Son Superman
+Rocket Red Brigade
+Rusalka
+Anya Savenlovich
+Sickle
+Snow Owl
+Stalnoivolk
+Tundra
+Valentina Vostok
+Vikhor
+EOF
+
+    lines=$(cat $namestemp | wc -l)
+    # "lines-1" cause it always ends with extra \n when using cat <<EOF
+    rnd=$(($RANDOM % $((lines - 1)) + 1))
+    name=$(head -n $rnd $namestemp | tail -n 1)
+    # Delete trailing whitespace, then replace " " with "-"
+    echo $name | awk '{$1=$1};1' | sed -e "s/ /-/g"
+    rm $namestemp
+}
+
 function mn_announce {
+
+# Feel free to modify this section.
+# Set your addresses here, or leave them empty for autogeneration
+###############################################################
+# Masternode name, 3 to 31 letters:
+name=${name:-$(get_random_name)}
+# P2PKH, must be unique:
+ownerAuthAddress=${ownerAuthAddress:-""}
+# P2PKH, must be unique:
+operatorAuthAddress=${operatorAuthAddress:-""}
+# P2PKH or P2SH
+ownerRewardAddress=${ownerRewardAddress:-""}
+# P2PKH or P2SH
+operatorRewardAddress=${operatorRewardAddress:-""}
+# P2PKH or P2SH
+collateralAddress=${collateralAddress:-""}
+# Number from 0 to 1. For example, 0.1 for 10%
+operatorRewardRatio=${operatorRewardRatio:-"0"}
+###############################################################
+
     if docker --version >/dev/null ; then
         echo "Checks 'docker' installed: OK"
     else
