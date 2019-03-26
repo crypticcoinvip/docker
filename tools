@@ -17,6 +17,7 @@ fi
 DEBUG_LOG=$NODE_DIR/${NETWORK_PATH}debug.log
 ERRFILE=/tmp/err.$$
 MAXCONNECTIONS=64
+CONTAINER=cryptic_by_$USER
 
 function help {
     cat << EOF
@@ -33,7 +34,7 @@ EOF
 }
 
 function d_exec {
-    docker exec cryptic "$@"
+    docker exec $CONTAINER "$@"
 }
 
 function cli {
@@ -44,14 +45,27 @@ function run_d {
     docker run -d -e USER_ID=$(id -u $USER) -e GROUP_ID=$(id -g $USER) \
         -v $HOME/.crypticcoin/:/home/crypticuser/.crypticcoin:rw \
         -v $HOME/.crypticcoin-params/:/home/crypticuser/.crypticcoin-params:rw \
-        --rm -it --name cryptic $IMAGE "$@"
+        --rm -it --name $CONTAINER $IMAGE "$@"
 }
 
 function run_i {
     docker run -e USER_ID=$(id -u $USER) -e GROUP_ID=$(id -g $USER) \
         -v $HOME/.crypticcoin/:/home/crypticuser/.crypticcoin:rw \
         -v $HOME/.crypticcoin-params/:/home/crypticuser/.crypticcoin-params:rw \
-        --rm -it --name cryptic $IMAGE "$@"
+        --rm -it --name $CONTAINER $IMAGE "$@"
+}
+
+function set_autostart {
+    cronfile=/etc/cron.d/$CONTAINER
+    if printf "@reboot $USER docker run -d -e USER_ID=$(id -u $USER) -e GROUP_ID=$(id -g $USER) \
+-v $HOME/.crypticcoin/:/home/crypticuser/.crypticcoin:rw \
+-v $HOME/.crypticcoin-params/:/home/crypticuser/.crypticcoin-params:rw \
+--rm -it --name $CONTAINER $IMAGE\n" | sudo tee ${cronfile}
+    then
+        echo "Autostart set in $cronfile"
+    else
+        echo "Set autostart failed!"
+    fi
 }
 
 function stop_d {
@@ -81,10 +95,10 @@ function ensure_stopped {
         else
             # other process is running, just stop whole container
             echo "Trying to stop container"
-            docker stop cryptic >/dev/null
+            docker stop $CONTAINER >/dev/null
         fi
     done
-    echo "Can't stop cryptic container, unknown error"
+    echo "Can't stop $CONTAINER container, unknown error"
     return 1
 }
 
@@ -106,7 +120,7 @@ function wait_run {
     done
 
     if $started; then
-        echo "Check if cryptic container started:  OK"
+        echo "Check if $CONTAINER container started:  OK"
     else
         echo "Run docker image $IMAGE failed!"
         cat $ERRFILE
