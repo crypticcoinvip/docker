@@ -8,10 +8,10 @@ IMAGE="${IMAGE:-sevenswen/crypticcoinubuntu18.04}"
 NODE_DIR=${NODE_DIR:-"$HOME/.crypticcoin"}
 CONFIG_FILE=${CONFIG_FILE:-"$NODE_DIR/crypticcoin.conf"}
 NETWORK_PATH=""
-if grep -q "^testnet=1" $CONFIG_FILE; then
+if grep -q "^testnet=1" $CONFIG_FILE 2>/dev/null; then
     NETWORK_PATH=testnet3/
 fi
-if grep -q "^regtest=1" $CONFIG_FILE; then
+if grep -q "^regtest=1" $CONFIG_FILE 2>/dev/null; then
     NETWORK_PATH=regtest/
 fi
 DEBUG_LOG=$NODE_DIR/${NETWORK_PATH}debug.log
@@ -30,6 +30,7 @@ function help {
     d_exec [args ...]   Execute command in container (for example, 'd_exec ps ax')
     cli [args ...]      Execute 'cli' command
     mn_announce         Try to announce masternode
+    set_autostart	Place command in /etc/cron.d/ to start node at system boot
 EOF
 }
 

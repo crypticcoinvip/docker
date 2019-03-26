@@ -50,8 +50,10 @@ Running 'cli' commands
 ----------------------
 After the node is running (deployed), CLI commands could be passed using 'docker exec' with 'crypticcoin-cli', but it's a bit long/unhandy:
 ```
-docker exec cryptic -datadir=/home/crypticuser/.crypticcoin getblockchaininfo
+docker exec cryptic_by_$USER -datadir=/home/crypticuser/.crypticcoin getblockchaininfo
 ```
+(Don't be confused with '-datadir' path - it is the path inside container)
+
 There's a short alias script named 'cli':
 ```
 ./tools cli getblockchaininfo
@@ -61,12 +63,12 @@ There's a short alias script named 'cli':
 Stop node
 ---------
 If you run the node interactively with "./tools run_i", you can just hit Ctrl+C to exit.
-Or, if you run it detached with "./tools run_i", you can kill it with
+Or, if you run it detached with "./tools run_d", you can kill it with
 ```
 ./tools stop_d
 ```
 
-Please, **do not use docker command 'docker stop cryptic'** to stop running node, or you have to recreate some node database indexes at every following start (it takes extra time).
+Please, **do not use docker command 'docker stop cryptic_by_$USER'** to stop running node, or you have to recreate some node database indexes at every following start (it takes extra time).
 
 You can run function 'ensure_stopped', which will try first to soft stop the node, overwise it will be terminated by 'docker stop'.
 ```
@@ -113,6 +115,6 @@ docker build --build-arg NPROC=8 --build-arg CRYPTIC_VERSION=1.1.2 -t myimage .
 ```
 Then you can run it with:
 ```
-IMAGE=myimage ./run.sh
+IMAGE=myimage ./tools run_d (or run_i)
 ```
 
