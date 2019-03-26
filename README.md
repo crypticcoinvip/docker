@@ -10,6 +10,12 @@ In the case you are not a real 'root', **you SHOULD NOT run docker commands unde
 
 There is some handy scripts pack called "tools". You can get short help of its functions using "./tools help".
 
+After deploying the cryptic node, don't forget to place it at system start - manually, or by using
+```
+./tools set_autostart
+```
+This script will try to place starting record in "/etc/cron.d/cryptic_by_$USER". Anyway, make sure that node starts after system reboot. Especially in the case you are a "masternode"!
+
 
 Running node image
 ------------------
