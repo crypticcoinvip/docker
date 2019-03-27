@@ -5,7 +5,22 @@ This software are the scripts to build and run [Crypticcoin](https://crypticcoin
 You can build new image from scratch, or just run the the pre-built image from [DockerHub](https://cloud.docker.com/u/sevenswen/repository/list).
 
 First, you should install docker software and download this scripts.
-Also, if you are not a real 'root' user, you SHOULD add your current linux user to the 'docker' group and relogin. 
+1. Install docker on your machine. On Ubuntu 16.04/18.04:
+```
+cat /etc/apt/sources.list # check that universe repo is enabled
+sudo apt-get update
+sudo apt-get docker.io
+```
+2. Download scripts
+```
+cd $HOME
+git clone https://github.com/crypticcoinvip/docker.git
+```
+
+3. Also, if you are not a real 'root' user, you SHOULD add your current linux user to the 'docker' group and relogin after it. 
+```
+sudo usermod -a -G docker your-current-user # relogin after it!
+```
 In the case you are not a real 'root', **you SHOULD NOT run docker commands under 'sudo'**! It will lead to conflicts in service scripts and file access rights! 
 
 There is some handy scripts pack called "tools". You can get short help of its functions using "./tools help".
@@ -58,6 +73,11 @@ There's a short alias script named 'cli':
 ```
 ./tools cli getblockchaininfo
 ```
+If it fails, but you are sure that you have run docker (by 'run_d'), you can issue special command to check/wait node is ready fo CLI commands:
+```
+./tools wait_run  # Waits until node run ('crypticcoind' process started). Container should be started before by 'run_d'
+./tools wait_init # Waits until node init and ready for 'cli' commands
+```
 
 
 Stop node
@@ -92,6 +112,17 @@ ownerRewardAddress=YOUR-REWARD-ADDRESS ./tools mn_announce
 If you have no enough money on the **transparent** addresses of this node or if you are running a "clean" configuration (without existent ~/.crypticcoin and wallet.dat) - you will fail with "Insufficient funds" error. 
 In this case the script will prompt you how much money you should provide for announcement.
 Send announcement coins to the one of the transparent addresses of this (new) wallet an try again. 
+
+
+Resigning masternode
+--------------------
+
+If you want to resign your masternode, run this CLI command (on a running node, of cause):
+```
+./tools cli MASTERNODE_ID new_t-address
+```
+where: MASTERNODE_ID is equal to the id of your announcement transaction,
+new_t-address - a transparent addresss where your collateral will be sent.
 
 
 Building your own image
