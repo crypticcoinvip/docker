@@ -669,10 +669,11 @@ operatorRewardRatio=${operatorRewardRatio:-"0"}
         echo "Congratulations! You have announced new masternode"
         echo "with ID = $id"
         echo "You can get additional info after block will be mined using:"
-        echo "$(cli) mn_list [\\\"$id\\\"] true"
+        echo "./tools cli mn_list [\\\"$id\\\"] true"
         echo
         echo "Don't forget to KEEP NODE RUNNING, or you'll get dismissed by the quorum!"
         echo
+	set_autostart
     else
         if grep "Insufficient funds!" $ERRFILE ; then
             echo "You should have at least $(cli mn_estimateannouncementfee) for fee + 1000000 CRYP for collateral on transparent addresses to announce a masternode!"

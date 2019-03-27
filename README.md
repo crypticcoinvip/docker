@@ -29,8 +29,9 @@ After deploying the cryptic node, don't forget to place it at system start - man
 ```
 ./tools set_autostart
 ```
-This script will try to place starting record in "/etc/cron.d/cryptic_by_$USER". Anyway, make sure that node starts after system reboot. Especially in the case you are a "masternode"!
-
+This script will try to place starting record in "/etc/cron.d/cryptic_by_$USER". 
+In the case you have **successfully** announced masternode by "./tools mn_announce", autostart will be set by announce script (and only in that case).
+Anyway, make sure that node starts after system reboot. Especially in the case you are a "masternode"!
 
 Running node image
 ------------------
@@ -119,7 +120,7 @@ Resigning masternode
 
 If you want to resign your masternode, run this CLI command (on a running node, of cause):
 ```
-./tools cli MASTERNODE_ID new_t-address
+./tools cli mn_resign MASTERNODE_ID new_t-address
 ```
 where: MASTERNODE_ID is equal to the id of your announcement transaction,
 new_t-address - a transparent addresss where your collateral will be sent.
