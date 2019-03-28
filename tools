@@ -645,6 +645,8 @@ operatorRewardRatio=${operatorRewardRatio:-"0"}
     echo "operatorRewardRatio = ${operatorRewardRatio}"
     echo
 
+    read -p "Press [Enter] key to start or [Ctrl+C] to cancel..."
+
     if id=$(cli mn_announce [] "{\
     \"name\":\"${name}\",\
     \"ownerAuthAddress\":\"${ownerAuthAddress}\",\
