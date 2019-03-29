@@ -1,12 +1,9 @@
 FROM ubuntu:18.04
 ARG NPROC=4
 ARG CRYPTIC_URL=https://github.com/crypticcoinvip/CrypticCoin 
-ARG CRYPTIC_VERSION=2.0.0
+ARG CRYPTIC_VERSION=2.0.1
 
 MAINTAINER integralTeam - feedback@crypticcoin.io
-
-#ENV CRYPTIC_URL=https://github.com/crypticcoinvip/CrypticCoin 
-#ENV CRYPTIC_VERSION=1.2.0 
 
 ENV PATH=/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin
 
