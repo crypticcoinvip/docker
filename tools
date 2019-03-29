@@ -593,7 +593,8 @@ operatorRewardRatio=${operatorRewardRatio:-"0"}
 
         if grep -q -E "(^masternode_operator)|(^masternode_owner)" $CONFIG_FILE; then
             echo "It looks like you are a masternode already! Are you sure you want to create new one?"
-            echo "Delete 'masternode_operator' and 'masternode_owner' from $CONFIG_FILE and try again!"
+            echo "Delete 'masternode_operator' and 'masternode_owner' strings from $CONFIG_FILE and try again!"
+	    return 1
         fi
 
         if grep -q "^maxconnections" $CONFIG_FILE; then
