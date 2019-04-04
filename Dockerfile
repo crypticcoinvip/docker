@@ -18,7 +18,7 @@ RUN export DEBIAN_FRONTEND=noninteractive \
     && apt-get install -y ${BUILD_DEPS} \
     && rm -rf /var/lib/apt/lists/* \
     && git clone ${CRYPTIC_URL} crypticcoin && cd crypticcoin && git checkout ${CRYPTIC_VERSION} \
-    && ./zcutil/build.sh -j${NPROC} \
+    && RELEASE="1" ./zcutil/build.sh -j${NPROC} \
     && /usr/bin/install -c ./src/crypticcoind ./src/crypticcoin-cli ./zcutil/fetch-params.sh -t /usr/local/bin/ \
     && rm -rf /crypticcoin \
     && rm -rf /root/.ccache \
