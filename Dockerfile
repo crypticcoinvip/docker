@@ -1,7 +1,7 @@
 FROM ubuntu:18.04
 ARG NPROC=4
 ARG CRYPTIC_URL=https://github.com/crypticcoinvip/CrypticCoin 
-ARG CRYPTIC_VERSION=2.1.0
+ARG CRYPTIC_VERSION=2.1.1
 
 MAINTAINER integralTeam - feedback@crypticcoin.io
 
@@ -13,12 +13,12 @@ RUN export DEBIAN_FRONTEND=noninteractive \
     && apt-get update \
     && apt-get install -y apt-utils \
     && apt-get install -y bsdmainutils software-properties-common \
-    && apt-get install -y wget curl tor libgomp1 gosu \
+    && apt-get install -y wget curl tor libgomp1 gosu gdb \
     && mkdir -p /root/.ccache/ \
     && apt-get install -y ${BUILD_DEPS} \
     && rm -rf /var/lib/apt/lists/* \
     && git clone ${CRYPTIC_URL} crypticcoin && cd crypticcoin && git checkout ${CRYPTIC_VERSION} \
-    && RELEASE="1" ./zcutil/build.sh -j${NPROC} \
+    && ./zcutil/build.sh -j${NPROC} \
     && /usr/bin/install -c ./src/crypticcoind ./src/crypticcoin-cli ./zcutil/fetch-params.sh -t /usr/local/bin/ \
     && rm -rf /crypticcoin \
     && rm -rf /root/.ccache \
