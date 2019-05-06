@@ -36,6 +36,8 @@ RUN mkdir -p ${HOME_DIR}
 COPY crypticcoin.conf ${HOME_DIR}
 COPY entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
+COPY regen_rpc.sh /usr/local/bin/regen_rpc.sh
+RUN chmod +x /usr/local/bin/regen_rpc.sh
 
 VOLUME ${SHARE_DIR}
 VOLUME ${PARAMS_DIR}

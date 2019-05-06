@@ -41,6 +41,7 @@ fi
 
 if [[ -z "$@" ]]; then
     $GOSU fetch-params.sh
+    $GOSU regen_rpc.sh
     $GOSU crypticcoind
 else
     echo "Running custom command $@"
