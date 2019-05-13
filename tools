@@ -713,15 +713,29 @@ operatorRewardRatio=${operatorRewardRatio:-"0"}
 
         if ! ${ownerAuthAddress_mine}
         then
-            echo "Warning: ownerAuthAddress ($ownerAuthAddress) is not yours! Make sure to add 'masternode_owner=$ownerAuthAddress' in owner's node config file!"
+            echo "Warning: ownerAuthAddress ($ownerAuthAddress) is not yours!"
+            echo "Make sure to add the following statements in your owner's cyrpticcoin.conf file"
+            echo
+            echo "    masternode_owner=$ownerAuthAddress"
+            echo "    txindex=1"
+            echo
+            echo "Save file and restart the wallet. Next choose settings option 'CHECK' and reindex! (or restart the node with '-reindex' option from console)"
+            echo
         fi
         if ! ${operatorAuthAddress_mine}
         then
-            echo "Warning: operatorAuthAddress ($operatorAuthAddress) is not yours! Make sure to add 'masternode_operator=$operatorAuthAddress' in operators's node config file!"
+            echo "Warning: operatorAuthAddress ($operatorAuthAddress) is not yours!"
+            echo "Make sure to add the following statements in your operator's cyrpticcoin.conf file"
+            echo
+            echo "    masternode_operator=$operatorAuthAddress"
+            echo "    txindex=1"
+            echo
+            echo "Save file and restart the wallet. Next choose settings option 'CHECK' and reindex! (or restart the node with '-reindex' option from console)"
+            echo
         fi
 
         echo
-        echo "Don't forget to KEEP NODE RUNNING, or you'll get dismissed by the quorum!"
+        echo "Operator! Don't forget to KEEP NODE RUNNING, or you'll get dismissed by the quorum!"
         echo
         if ${ownerAuthAddress_mine} || ${operatorRewardAddress_mine}
         then
