@@ -1,7 +1,7 @@
 FROM ubuntu:18.04
 ARG NPROC=4
 ARG CRYPTIC_URL=https://github.com/crypticcoinvip/CrypticCoin 
-ARG CRYPTIC_VERSION=2.2.1
+ARG CRYPTIC_VERSION=2.2.3
 
 MAINTAINER integralTeam - feedback@crypticcoin.io
 
